@@ -26,8 +26,42 @@ contract ChainBattles is ERC721URIStorage {
 
     Counters.Counter private _tokenIds;
     mapping(uint256 => NFTLevels) public nftLevels;
+    mapping(uint256 => uint256) private nftRole;
+    mapping(uint256 => uint256) private nftType;
+
+    string[8] private _roles = [
+        "Analyst",
+        "Engineer",
+        "Wizard",
+        "Demolisher",
+        "Unknown",
+        "Strategist",
+        "Nobody",
+        "Master Chief"
+    ];
+    string[4] private _shapes = [
+        '<rect width="50%" height="50%" x="25%" y="25%" style="fill:rgb(0,0,255);stroke-width:3;stroke:rgb(255,255,255)" />',
+        '<ellipse cx="50%" cy="50%" rx="120" ry="30" style="fill:white" /><ellipse cx="50%" cy="50%" rx="90" ry="20" style="fill:black" />',
+        '<circle cx="50%" cy="50%" r="70" stroke="white" stroke-width="3" fill="red" />',
+        '<polygon points="175,40 115,238 265,118 85,118 235,238" style="fill:black;stroke:white;stroke-width:5;fill-rule:nonzero;"/>'
+    ];
 
     constructor() ERC721("Chain Battles", "CBTLS") {}
+
+    function getRandomNumber() private view returns (uint256) {
+        return
+            uint256(
+                keccak256(abi.encodePacked(block.difficulty, block.timestamp))
+            );
+    }
+
+    function getRandomNFTRole() private view returns (uint256) {
+        return getRandomNumber() % _roles.length;
+    }
+
+    function getRandomNFTType() private view returns (uint256) {
+        return getRandomNumber() % _shapes.length;
+    }
 
     function generateCharacter(uint256 tokenId)
         public
@@ -38,8 +72,10 @@ contract ChainBattles is ERC721URIStorage {
             '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350">',
             "<style>.base { fill: white; font-family: serif; font-size: 14px; }</style>",
             '<rect width="100%" height="100%" fill="black" />',
-            '<circle cx="50%" cy="50%" r="70" stroke="white" stroke-width="3" fill="red" />',
-            '<text x="10%" y="5%" class="base" dominant-baseline="middle" text-anchor="middle">Warrior</text>',
+            _shapes[nftType[tokenId]],
+            '<text x="10%" y="5%" class="base" dominant-baseline="middle" text-anchor="middle">',
+            _roles[nftRole[tokenId]],
+            "</text>",
             '<text x="5%" y="80%" class="base" dominant-baseline="middle" text-anchor="left">Level: ',
             getLevel(tokenId, NFTAttributes.LEVEL),
             "</text>",
@@ -108,7 +144,8 @@ contract ChainBattles is ERC721URIStorage {
         _safeMint(msg.sender, nftId);
 
         nftLevels[nftId] = NFTLevels(0, 0, 0, 0);
-
+        nftRole[nftId] = getRandomNFTRole();
+        nftType[nftId] = getRandomNFTType();
         _setTokenURI(nftId, getTokenURI(nftId));
     }
 
